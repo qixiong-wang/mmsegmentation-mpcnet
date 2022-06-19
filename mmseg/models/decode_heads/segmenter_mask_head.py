@@ -9,11 +9,11 @@ from mmcv.runner import ModuleList
 
 from mmseg.models.backbones.vit import TransformerEncoderLayer
 from ..builder import HEADS
-from .decode_head import BaseDecodeHead
+from .decode_head_memory import BaseDecodeHead_momory
 
 
 @HEADS.register_module()
-class SegmenterMaskTransformerHead(BaseDecodeHead):
+class SegmenterMaskTransformerHead(BaseDecodeHead_momory):
     """Segmenter: Transformer for Semantic Segmentation.
 
     This head is the implementation of
@@ -83,16 +83,16 @@ class SegmenterMaskTransformerHead(BaseDecodeHead):
                 ))
 
         self.dec_proj = nn.Linear(in_channels, embed_dims)
-
+        self.num_subclasses = 4 
         self.cls_emb = nn.Parameter(
-            torch.randn(1, self.num_classes, embed_dims))
+            torch.randn(1, self.num_subclasses* self.num_classes, embed_dims))
         self.patch_proj = nn.Linear(embed_dims, embed_dims, bias=False)
         self.classes_proj = nn.Linear(embed_dims, embed_dims, bias=False)
 
         self.decoder_norm = build_norm_layer(
             norm_cfg, embed_dims, postfix=1)[1]
         self.mask_norm = build_norm_layer(
-            norm_cfg, self.num_classes, postfix=2)[1]
+            norm_cfg, self.num_subclasses*self.num_classes, postfix=2)[1]
 
         self.init_std = init_std
 
@@ -120,14 +120,17 @@ class SegmenterMaskTransformerHead(BaseDecodeHead):
             x = layer(x)
         x = self.decoder_norm(x)
 
-        patches = self.patch_proj(x[:, :-self.num_classes])
-        cls_seg_feat = self.classes_proj(x[:, -self.num_classes:])
+        patches = self.patch_proj(x[:, :-self.num_subclasses*self.num_classes])
+        cls_seg_feat = self.classes_proj(x[:, -self.num_subclasses*self.num_classes:])
 
         patches = F.normalize(patches, dim=2, p=2)
         cls_seg_feat = F.normalize(cls_seg_feat, dim=2, p=2)
 
+        
         masks = patches @ cls_seg_feat.transpose(1, 2)
         masks = self.mask_norm(masks)
-        masks = masks.permute(0, 2, 1).contiguous().view(b, -1, h, w)
+        masks = masks.permute(0, 2, 1).contiguous().view(b,self.num_subclasses,-1, h, w)
 
-        return masks
+        masks = torch.max(masks,dim=1)[0]
+
+        return masks,cls_seg_feat
