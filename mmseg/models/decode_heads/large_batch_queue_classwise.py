@@ -89,16 +89,17 @@ class Large_batch_queue_classwise(nn.Module):
         #     dist.barrier()
         
         # gather_features,gather_pid_labels = undefined_l_gather(features,pid_labels)
-
+        
         with torch.no_grad():
             for indx, label in enumerate(pid_labels):
                 label=int(label)
                 if label >= 0 and label<self.num_classes:
 
                     self.large_batch_queue[label,self.tail[label]] = features[indx]
-
+                    
                     # self.large_batch_queue[label,self.tail[label]] = torch.mean(features[pid_labels==label],dim=0)
                     self.tail[label]+=1
                     if self.tail[label] >= self.large_batch_queue.shape[1]:
                         self.tail[label] -= self.large_batch_queue.shape[1]
+
         return self.large_batch_queue

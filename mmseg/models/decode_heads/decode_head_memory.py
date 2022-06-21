@@ -107,8 +107,8 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
             self.dropout = None
         self.fp16_enabled = False
         self.large_batch_queue = Large_batch_queue_classwise(
-            num_classes=self.num_classes, number_of_instance= 100 , feat_len= 768)
-        self.loss_batch_tri = TripletLossbatch_classwise(num_classes=self.num_classes)
+            num_classes=self.num_classes *4, number_of_instance= 100 , feat_len= 768)
+        self.loss_batch_tri = TripletLossbatch_classwise(num_classes=self.num_classes *4)
 
 
     def extra_repr(self):
