@@ -132,5 +132,6 @@ class SegmenterMaskTransformerHead(BaseDecodeHead_momory):
         masks = masks.permute(0, 2, 1).contiguous().view(b,self.num_subclasses,-1, h, w)
 
         masks = torch.max(masks,dim=1)[0]
-
+        import pdb
+        pdb.set_trace()
         return masks,cls_seg_feat
