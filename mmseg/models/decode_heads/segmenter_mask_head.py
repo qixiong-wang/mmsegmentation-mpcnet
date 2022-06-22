@@ -109,6 +109,8 @@ class SegmenterMaskTransformerHead(BaseDecodeHead_momory):
                 constant_init(m, val=1.0, bias=0.0)
 
     def forward(self, inputs):
+        import pdb
+        pdb.set_trace()
         x = self._transform_inputs(inputs)
         b, c, h, w = x.shape
         x = x.permute(0, 2, 3, 1).contiguous().view(b, -1, c)
