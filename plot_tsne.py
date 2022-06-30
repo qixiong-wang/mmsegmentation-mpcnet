@@ -9,57 +9,65 @@ import pdb
 import torch
 
 
-model_dict = torch.load('work_dirs/multiclass_segementor_max/iter_48000.pth')
+model_dict = torch.load('work_dirs/fpn_segmentor_vaihingen/iter_40000.pth')
 
-model_dict['state_dict']['decode_head.large_batch_queue.large_batch_queue']
-import pdb
-pdb.set_trace()
-CLASSES = ('Passenger-Ship', 'Motorboat', 'Fishing-Boat',
-            'Tugboat', 'other-ship', 'Engineering-Ship', 'Liquid-Cargo-Ship',
-            'Dry-Cargo-Ship', 'Warship', 'Small-Car', 'Bus',
-            'Cargo-Truck', 'Dump-Truck', 'other-vehicle', 'Van',
-            'Trailer', 'Tractor', 'Excavator', 'Truck-Tractor',
-            'Boeing737', 'Boeing747', 'Boeing777', 'Boeing787',
-            'ARJ21', 'C919', 'A220', 'A321', 'A330', 'A350',
-            'other-airplane', 'Baseball-Field', 'Basketball-Court',
-            'Football-Field', 'Tennis-Court', 'Roundabout', 'Intersection', 'Bridge')
+query_feature = model_dict['state_dict']['decode_head.cls_emb'][0]
+
+tsne = manifold.TSNE(n_components=2,init='pca',random_state=1)
+query_feature_tsne = tsne.fit_transform(query_feature)
+
+plt.scatter(query_feature_tsne, query_feature_tsne, marker='o')
+        # plt.legend(fontsize=20,bbox_to_anchor=(1.05,0),loc=3,borderaxespad=0)
+plt.savefig('query_feature_vis.png')
+
+
+
+# CLASSES = ('Passenger-Ship', 'Motorboat', 'Fishing-Boat',
+#             'Tugboat', 'other-ship', 'Engineering-Ship', 'Liquid-Cargo-Ship',
+#             'Dry-Cargo-Ship', 'Warship', 'Small-Car', 'Bus',
+#             'Cargo-Truck', 'Dump-Truck', 'other-vehicle', 'Van',
+#             'Trailer', 'Tractor', 'Excavator', 'Truck-Tractor',
+#             'Boeing737', 'Boeing747', 'Boeing777', 'Boeing787',
+#             'ARJ21', 'C919', 'A220', 'A321', 'A330', 'A350',
+#             'other-airplane', 'Baseball-Field', 'Basketball-Court',
+#             'Football-Field', 'Tennis-Court', 'Roundabout', 'Intersection', 'Bridge')
 
 
 
 # markers = ['o','*','^','s','D','v','v','p','h','D']
-colors = ['purple','blue','red','green','yellow','lime','deeppink','orange','cyan','limegreen','black']
-cls_map = {c: i
-            for i, c in enumerate(CLASSES)
-            }
+# colors = ['purple','blue','red','green','yellow','lime','deeppink','orange','cyan','limegreen','black']
+# cls_map = {c: i
+#             for i, c in enumerate(CLASSES)
+#             }
 
-cls_feature=[[]for i in range(11)]
-cls_label=[[]for i in range(11)]
-with open('features_origin_18epoch.pkl','rb') as f:
-    results = pickle.load(f)
-    for filename, det_result in results:
-        for cls_idx in range(11):
-            if det_result[cls_idx].shape[0]!=0:
-                for result in det_result[cls_idx]:
-                    if result[-1]>0.5:
-                        if len(cls_feature[cls_idx])<100:
-                            cls_feature[cls_idx].append(result[5:-1])
+# cls_feature=[[]for i in range(11)]
+# cls_label=[[]for i in range(11)]
+# with open('features_origin_18epoch.pkl','rb') as f:
+#     results = pickle.load(f)
+#     for filename, det_result in results:
+#         for cls_idx in range(11):
+#             if det_result[cls_idx].shape[0]!=0:
+#                 for result in det_result[cls_idx]:
+#                     if result[-1]>0.5:
+#                         if len(cls_feature[cls_idx])<100:
+#                             cls_feature[cls_idx].append(result[5:-1])
                         
 
-for cls_idx in range(11):
-    cls_label[cls_idx]=np.ones(len(cls_feature[cls_idx]))*cls_idx
+# for cls_idx in range(11):
+#     cls_label[cls_idx]=np.ones(len(cls_feature[cls_idx]))*cls_idx
 
-cls_label=np.concatenate(cls_label)
-cls_feature = np.concatenate(cls_feature)
+# cls_label=np.concatenate(cls_label)
+# cls_feature = np.concatenate(cls_feature)
 
 
-tsne = manifold.TSNE(n_components=2,init='pca',random_state=1)
-cls_tsne_feature = tsne.fit_transform(cls_feature)
-for cls_idx in range(11):
+# tsne = manifold.TSNE(n_components=2,init='pca',random_state=1)
+# cls_tsne_feature = tsne.fit_transform(query_feature)
+# for cls_idx in range(11):
 
-    indices = cls_label==cls_idx
-    plt.scatter(cls_tsne_feature[indices, 0],  cls_tsne_feature[indices, 1],s=20,color = colors[cls_idx], marker='o',label = CLASSES[cls_idx])
-        # plt.legend(fontsize=20,bbox_to_anchor=(1.05,0),loc=3,borderaxespad=0)
-plt.savefig('feature_origin18_epoch_vis.png')
+#     indices = cls_label==cls_idx
+#     plt.scatter(cls_tsne_feature[indices, 0],  cls_tsne_feature[indices, 1],s=20,color = colors[cls_idx], marker='o',label = CLASSES[cls_idx])
+#         # plt.legend(fontsize=20,bbox_to_anchor=(1.05,0),loc=3,borderaxespad=0)
+# plt.savefig('feature_origin18_epoch_vis.png')
 
 
 
