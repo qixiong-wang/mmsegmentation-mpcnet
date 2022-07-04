@@ -179,6 +179,7 @@ class EncoderDecoder(BaseSegmentor):
                 x1 = max(x2 - w_crop, 0)
                 crop_img = img[:, :, y1:y2, x1:x2]
                 crop_seg_logit = self.encode_decode(crop_img, img_meta)
+
                 preds += F.pad(crop_seg_logit,
                                (int(x1), int(preds.shape[3] - x2), int(y1),
                                 int(preds.shape[2] - y2)))
