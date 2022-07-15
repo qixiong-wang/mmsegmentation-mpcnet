@@ -218,32 +218,41 @@ class FPN_segmentor_Head(BaseDecodeHead):
                             align_corners=self.align_corners))
             self.scale_heads.append(nn.Sequential(*scale_head))
 
-        in_channels =128 
+        self.transformer_self_attention_layers = nn.ModuleList()
+        self.transformer_cross_attention_layers = nn.ModuleList()
+        self.transformer_ffn_layers = nn.ModuleList()
+
         num_heads = 2
         embed_dims = 128
-        # self.dec_proj = nn.Linear(in_channels, embed_dims)
+        # self.dec_proj = nn.Linear(in_channels, embed_dims)\
+
         self.num_subclasses = 1
         self.cls_emb = nn.Parameter(
             torch.randn(1, self.num_subclasses* self.num_classes, embed_dims))
-
-        self.transformer_cross_attention_layers= CrossAttentionLayer(
-                d_model=embed_dims,
-                nhead=num_heads,
-                dropout=0.0,
-                normalize_before=False,
-            )
-        self.transformer_self_attention_layers = SelfAttentionLayer(
+        for i in range(len(feature_strides)-1):
+            self.transformer_cross_attention_layers.append(
+                CrossAttentionLayer(
                     d_model=embed_dims,
                     nhead=num_heads,
                     dropout=0.0,
                     normalize_before=False,
                 )
-
-        self.transformer_ffn_layers = FFNLayer(
-                d_model=embed_dims,
-                dim_feedforward=num_heads,
-                dropout=0.0,
-                normalize_before=False,
+            )
+            self.transformer_self_attention_layers.append(
+                SelfAttentionLayer(
+                        d_model=embed_dims,
+                        nhead=num_heads,
+                        dropout=0.0,
+                        normalize_before=False,
+                    )
+            )
+            self.transformer_ffn_layers.append(
+                FFNLayer(
+                    d_model=embed_dims,
+                    dim_feedforward=num_heads,
+                    dropout=0.0,
+                    normalize_before=False,
+                )
             )
 
         # num_layers =2 
@@ -289,36 +298,34 @@ class FPN_segmentor_Head(BaseDecodeHead):
         x = self._transform_inputs(inputs)
 
         output = self.scale_heads[0](x[0])
+        cls_seg_feat = self.cls_emb.expand(output.size(0), -1, -1)
         for i in range(1, len(self.feature_strides)):
             # non inplace
+            
+            resized_patches = output
+            b, c, h, w = resized_patches.shape
+            resized_patches = resized_patches.permute(0, 2, 3, 1).contiguous().view(b, -1, c)
+            cls_seg_feat = self.transformer_cross_attention_layers[i-1](cls_seg_feat,resized_patches)
+            cls_seg_feat = self.transformer_self_attention_layers[i-1](cls_seg_feat)
+            cls_seg_feat = self.transformer_ffn_layers[i-1](cls_seg_feat)
+
             output = output + resize(
                 self.scale_heads[i](x[i]),
                 size=output.shape[2:],
                 mode='bilinear',
                 align_corners=self.align_corners)
 
-        # output = self.cls_seg(output)\
-
-        patches = output
-        b, c, h, w = patches.shape
-        patches = patches.permute(0, 2, 3, 1).contiguous().view(b, -1, c)
-
-        # patches = self.dec_proj(patches)
-        cls_emb = self.cls_emb.expand(patches.size(0), -1, -1)
-        # cls_output = self.cls_emb.expand(patches.size(0), -1, -1)
-        cls_seg_feat = self.transformer_cross_attention_layers(cls_emb,patches)
-        cls_seg_feat = self.transformer_self_attention_layers(cls_seg_feat)
-        cls_seg_feat = self.transformer_ffn_layers(cls_seg_feat)
 
         # cls_seg_feat = self.decoder_norm(cls_seg_feat)
+        b, c, h, w = output.shape
+        output = output.permute(0, 2, 3, 1).contiguous().view(b, -1, c)
 
-        patches = self.patch_proj(patches)
+        output = self.patch_proj(output)
         cls_seg_feat = self.classes_proj(cls_seg_feat)
 
-        patches = F.normalize(patches, dim=2, p=2)
+        output = F.normalize(output, dim=2, p=2)
         cls_seg_feat = F.normalize(cls_seg_feat, dim=2, p=2)
-        output = patches @ cls_seg_feat.transpose(1, 2)
-
+        output = output @ cls_seg_feat.transpose(1, 2)
         output = self.mask_norm(output)
         output = output.permute(0, 2, 1).contiguous().view(b,self.num_subclasses,-1, h, w)
 
