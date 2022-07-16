@@ -226,7 +226,7 @@ class FPN_segmentor_Head(BaseDecodeHead):
         embed_dims = 128
         # self.dec_proj = nn.Linear(in_channels, embed_dims)\
 
-        self.num_subclasses = 1
+        self.num_subclasses = 4
         self.cls_emb = nn.Parameter(
             torch.randn(1, self.num_subclasses* self.num_classes, embed_dims))
         for i in range(len(feature_strides)-1):
@@ -329,6 +329,6 @@ class FPN_segmentor_Head(BaseDecodeHead):
         output = self.mask_norm(output)
         output = output.permute(0, 2, 1).contiguous().view(b,self.num_subclasses,-1, h, w)
 
-        output = torch.max(output,dim=1)[0]
+        # output = torch.max(output,dim=1)[0]
         
         return output

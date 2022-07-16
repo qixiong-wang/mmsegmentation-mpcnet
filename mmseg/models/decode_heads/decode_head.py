@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from abc import ABCMeta, abstractmethod
+import imp
 
 import torch
 import torch.nn as nn
@@ -201,7 +202,20 @@ class BaseDecodeHead(BaseModule, metaclass=ABCMeta):
             dict[str, Tensor]: a dictionary of loss components
         """
         seg_logits = self.forward(inputs)
-        losses = self.losses(seg_logits, gt_semantic_seg)
+        losses = dict({'loss_ce': 0,'acc_seg': 0})
+        
+        if len(seg_logits.shape)==4:
+            losses = self.losses(seg_logits[:,i], gt_semantic_seg)
+        else:
+            loss_list = []
+            for i in range(seg_logits.shape[1]):
+                loss_list.append(self.losses(seg_logits[:,i], gt_semantic_seg))
+            for loss in loss_list:
+
+                losses['loss_ce'] += loss['loss_ce']
+                losses['acc_seg'] += loss['acc_seg']
+        losses['acc_seg'] = losses['acc_seg']/len(loss_list)
+
         return losses
 
     def forward_test(self, inputs, img_metas, test_cfg):
@@ -219,7 +233,8 @@ class BaseDecodeHead(BaseModule, metaclass=ABCMeta):
         Returns:
             Tensor: Output segmentation map.
         """
-        return self.forward(inputs)
+        return torch.max(self.forward(inputs),dim=1)[0]
+        # return self.forward(inputs)
 
     def cls_seg(self, feat):
         """Classify each pixel."""
@@ -247,6 +262,7 @@ class BaseDecodeHead(BaseModule, metaclass=ABCMeta):
             losses_decode = [self.loss_decode]
         else:
             losses_decode = self.loss_decode
+
         for loss_decode in losses_decode:
             if loss_decode.loss_name not in loss:
                 loss[loss_decode.loss_name] = loss_decode(
