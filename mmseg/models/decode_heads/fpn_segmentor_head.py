@@ -11,6 +11,7 @@ from mmcv.cnn.utils.weight_init import (constant_init, trunc_normal_,
                                         trunc_normal_init)
 
 from mmseg.models.backbones.vit import TransformerEncoderLayer
+from mmseg.models.decode_heads.decode_head_memory import BaseDecodeHead_momory
 from mmseg.ops import Upsample, resize
 from ..builder import HEADS
 from .decode_head import BaseDecodeHead
@@ -175,7 +176,7 @@ class FFNLayer(nn.Module):
 
 
 @HEADS.register_module()
-class FPN_segmentor_Head(BaseDecodeHead):
+class FPN_segmentor_Head(BaseDecodeHead_momory):
     """Panoptic Feature Pyramid Networks.
 
     This head is the implementation of `Semantic FPN
@@ -331,4 +332,4 @@ class FPN_segmentor_Head(BaseDecodeHead):
 
         # output = torch.max(output,dim=1)[0]
         
-        return output
+        return output,cls_seg_feat

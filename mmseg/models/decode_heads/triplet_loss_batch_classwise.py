@@ -94,3 +94,53 @@ class TripletLossbatch_classwise(nn.Module):
         loss = self.ranking_loss(dist_an, dist_ap, y)
         # torch.cuda.empty_cache()
         return loss
+
+
+
+class Compact_Loss(nn.Module):
+    """Triplet loss with hard positive/negative mining.
+
+    Reference:
+    Hermans et al. In Defense of the Triplet Loss for Person Re-Identification. arXiv:1703.07737.
+
+    Code imported from https://github.com/Cysu/open-reid/blob/master/reid/loss/triplet.py.
+
+    Args:
+        margin (float): margin for triplet.
+    """
+    def __init__(self, num_classes=37):
+        super(Compact_Loss, self).__init__()
+        self.num_classes = num_classes
+
+    def forward(self, pid_features,pid_labels, large_batch_queue):
+        """
+        Does not calculate noise inputs with label -1
+        Args:
+            inputs: feature matrix with shape (batch_size, feat_dim)
+            targets: ground truth labels with shape (num_classes)
+        """
+        #print(inputs.shape, targets.shape)
+
+        avai_labels =[]
+        avai_features =[]
+        for indx, label in enumerate(torch.unique(pid_labels)):
+            if label >= 0 and label<self.num_classes:
+                avai_labels.append(label)
+                avai_features.append(torch.mean(pid_features[pid_labels==label],dim=0))
+
+        avai_labels=torch.stack(avai_labels).cuda()
+        avai_features=torch.stack(avai_features).cuda()
+        batch_queue_label=[]
+        import pdb
+        pdb.set_trace()
+        for i in range(large_batch_queue.shape[0]):
+            batch_queue_label.extend([i]*large_batch_queue.shape[1])
+        batch_queue_label=torch.tensor(batch_queue_label).cuda()
+        dist_mat = euclidean_dist(avai_features, large_batch_queue.reshape(-1,large_batch_queue.shape[-1]))
+        dist_ap, dist_an = hard_example_mining(
+            dist_mat,avai_labels,batch_queue_label)
+        y = dist_an.new().resize_as_(dist_an).fill_(1)
+
+        loss = self.ranking_loss(dist_an, dist_ap, y)
+        # torch.cuda.empty_cache()
+        return loss

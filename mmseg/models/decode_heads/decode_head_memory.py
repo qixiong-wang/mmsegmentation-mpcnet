@@ -11,7 +11,7 @@ from ..builder import build_loss
 from ..losses import accuracy
 from .large_batch_queue_classwise import Large_batch_queue_classwise
 from .triplet_loss_batch_classwise import TripletLossbatch_classwise
-
+from .triplet_loss_batch_classwise import TripletLossbatch_classwise
 class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
     """Base class for BaseDecodeHead.
 
@@ -107,9 +107,9 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
             self.dropout = None
         self.fp16_enabled = False
         self.large_batch_queue = Large_batch_queue_classwise(
-            num_classes=self.num_classes *4, number_of_instance= 100 , feat_len= 768)
+            num_classes=self.num_classes *4, number_of_instance= 100 , feat_len= 128)
         self.loss_batch_tri = TripletLossbatch_classwise(num_classes=self.num_classes *4)
-
+        self.loss_batch_comp = Compact_loss(num_classes=self.num_classes *4)
 
     def extra_repr(self):
         """Extra repr."""
@@ -206,7 +206,20 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
             dict[str, Tensor]: a dictionary of loss components
         """
         seg_logits, cls_feature = self.forward(inputs)
-        losses = self.losses(seg_logits, gt_semantic_seg)
+        losses = dict({'loss_ce': 0,'acc_seg': 0})
+        
+        if len(seg_logits.shape)==4:
+            losses = self.losses(seg_logits[:,i], gt_semantic_seg)
+        else:
+            loss_list = []
+            for i in range(seg_logits.shape[1]):
+                loss_list.append(self.losses(seg_logits[:,i], gt_semantic_seg))
+            for loss in loss_list:
+
+                losses['loss_ce'] += loss['loss_ce']
+                losses['acc_seg'] += loss['acc_seg']
+        losses['acc_seg'] = losses['acc_seg']/len(loss_list)
+        # losses = self.losses(seg_logits, gt_semantic_seg)
 
         number_sub_class = cls_feature.shape[1]
         batch_size = cls_feature.shape[0]
@@ -216,6 +229,7 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
         cls_feature = torch.reshape(cls_feature,(-1,cls_feature.shape[-1]))
         large_batch_queue = self.large_batch_queue(cls_feature, cls_labels)
         loss_batch_tri = self.loss_batch_tri(cls_feature, cls_labels, large_batch_queue)
+        loss_comp= self.loss_batch_comp(cls_feature, cls_labels, large_batch_queue)
 
         losses['loss_triplet'] = loss_batch_tri
 
@@ -237,8 +251,8 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
         Returns:
             Tensor: Output segmentation map.
         """
-        return self.forward(inputs)[0]
-
+        return torch.max(self.forward(inputs)[0],dim=1)[0]
+        # return self.forward(inputs)
     def cls_seg(self, feat):
         """Classify each pixel."""
         if self.dropout is not None:
