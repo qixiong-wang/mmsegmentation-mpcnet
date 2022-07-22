@@ -11,7 +11,7 @@ from ..builder import build_loss
 from ..losses import accuracy
 from .large_batch_queue_classwise import Large_batch_queue_classwise
 from .triplet_loss_batch_classwise import TripletLossbatch_classwise
-from .triplet_loss_batch_classwise import TripletLossbatch_classwise
+from .triplet_loss_batch_classwise import Compact_intra_Loss
 class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
     """Base class for BaseDecodeHead.
 
@@ -108,8 +108,8 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
         self.fp16_enabled = False
         self.large_batch_queue = Large_batch_queue_classwise(
             num_classes=self.num_classes *4, number_of_instance= 100 , feat_len= 128)
-        self.loss_batch_tri = TripletLossbatch_classwise(num_classes=self.num_classes *4)
-        # self.loss_batch_comp = Compact_loss(num_classes=self.num_classes *4)
+        self.loss_batch_tri = TripletLossbatch_classwise(num_classes=self.num_classes)
+        self.loss_batch_comp = Compact_intra_Loss(num_classes=self.num_classes *4)
 
     def extra_repr(self):
         """Extra repr."""
@@ -206,6 +206,7 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
             dict[str, Tensor]: a dictionary of loss components
         """
         seg_logits, cls_feature = self.forward(inputs)
+
         losses = dict({'loss_ce': 0,'acc_seg': 0})
         
         if len(seg_logits.shape)==4:
@@ -221,18 +222,20 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
         losses['acc_seg'] = losses['acc_seg']/len(loss_list)
         # losses = self.losses(seg_logits, gt_semantic_seg)
 
-        number_sub_class = cls_feature.shape[1]
+        number_sub_class = int(cls_feature.shape[1]/self.num_classes)
+        
         batch_size = cls_feature.shape[0]
-        cls_labels = [torch.arange(number_sub_class) for _ in range(batch_size)]
+        cls_labels = [torch.arange(self.num_classes*number_sub_class) for _ in range(batch_size)]
         cls_labels = torch.cat(cls_labels)
 
         cls_feature = torch.reshape(cls_feature,(-1,cls_feature.shape[-1]))
         large_batch_queue = self.large_batch_queue(cls_feature, cls_labels)
         loss_batch_tri = self.loss_batch_tri(cls_feature, cls_labels, large_batch_queue)
+
         loss_comp= self.loss_batch_comp(cls_feature, cls_labels, large_batch_queue)
 
         losses['loss_triplet'] = loss_batch_tri
-
+        losses['loss_comp'] = loss_comp
 
         return losses
 

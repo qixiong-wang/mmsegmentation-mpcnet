@@ -41,6 +41,7 @@ def hard_example_mining(dist_mat, pid_labels, queue_labels, return_inds=False):
 
     for i in range(N):
         label = pid_labels[i]
+
         dist_ap[i] = torch.max(dist_mat[i][queue_labels==label])
         dist_an[i] = torch.min(dist_mat[i][queue_labels != label])
 
@@ -74,21 +75,22 @@ class TripletLossbatch_classwise(nn.Module):
 
         avai_labels =[]
         avai_features =[]
-        for indx, label in enumerate(torch.unique(pid_labels)):
-            if label >= 0 and label<self.num_classes:
-                avai_labels.append(label)
-                avai_features.append(torch.mean(pid_features[pid_labels==label],dim=0))
+        for indx, label in enumerate(pid_labels):
+            # if label >= 0 and label<self.num_classes:
+            label=label%self.num_classes
+            avai_labels.append(label)
+            avai_features.append(pid_features[indx])
 
         avai_labels=torch.stack(avai_labels).cuda()
         avai_features=torch.stack(avai_features).cuda()
         batch_queue_label=[]
 
         for i in range(large_batch_queue.shape[0]):
-            batch_queue_label.extend([i]*large_batch_queue.shape[1])
+            batch_queue_label.extend([i%self.num_classes]*large_batch_queue.shape[1])
+
         batch_queue_label=torch.tensor(batch_queue_label).cuda()
         dist_mat = euclidean_dist(avai_features, large_batch_queue.reshape(-1,large_batch_queue.shape[-1]))
-        dist_ap, dist_an = hard_example_mining(
-            dist_mat,avai_labels,batch_queue_label)
+        dist_ap, dist_an = hard_example_mining(dist_mat,avai_labels,batch_queue_label)
         y = dist_an.new().resize_as_(dist_an).fill_(1)
 
         loss = self.ranking_loss(dist_an, dist_ap, y)
@@ -97,7 +99,7 @@ class TripletLossbatch_classwise(nn.Module):
 
 
 
-class Compact_Loss(nn.Module):
+class Compact_intra_Loss(nn.Module):
     """Triplet loss with hard positive/negative mining.
 
     Reference:
@@ -109,7 +111,7 @@ class Compact_Loss(nn.Module):
         margin (float): margin for triplet.
     """
     def __init__(self, num_classes=37):
-        super(Compact_Loss, self).__init__()
+        super(Compact_intra_Loss, self).__init__()
         self.num_classes = num_classes
 
     def forward(self, pid_features,pid_labels, large_batch_queue):
@@ -120,27 +122,15 @@ class Compact_Loss(nn.Module):
             targets: ground truth labels with shape (num_classes)
         """
         #print(inputs.shape, targets.shape)
+        num_subcluster,num_sample, channel = large_batch_queue.shape[0],large_batch_queue.shape[1],large_batch_queue.shape[2]
+         
+        pid_features = pid_features.reshape(-1,num_subcluster,channel)
+        # pid_labels = pid_labels.reshape(num_subcluster,-1)
 
-        avai_labels =[]
-        avai_features =[]
-        for indx, label in enumerate(torch.unique(pid_labels)):
-            if label >= 0 and label<self.num_classes:
-                avai_labels.append(label)
-                avai_features.append(torch.mean(pid_features[pid_labels==label],dim=0))
+        # pid_features = torch.mean(pid_features,dim=0)
 
-        avai_labels=torch.stack(avai_labels).cuda()
-        avai_features=torch.stack(avai_features).cuda()
-        batch_queue_label=[]
-        import pdb
-        pdb.set_trace()
-        for i in range(large_batch_queue.shape[0]):
-            batch_queue_label.extend([i]*large_batch_queue.shape[1])
-        batch_queue_label=torch.tensor(batch_queue_label).cuda()
-        dist_mat = euclidean_dist(avai_features, large_batch_queue.reshape(-1,large_batch_queue.shape[-1]))
-        dist_ap, dist_an = hard_example_mining(
-            dist_mat,avai_labels,batch_queue_label)
-        y = dist_an.new().resize_as_(dist_an).fill_(1)
+        diff = large_batch_queue.permute(1,0,2) - pid_features[0]
+        loss = torch.norm(diff)/num_sample
 
-        loss = self.ranking_loss(dist_an, dist_ap, y)
         # torch.cuda.empty_cache()
         return loss
