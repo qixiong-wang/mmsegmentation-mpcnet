@@ -59,7 +59,7 @@ class TripletLossbatch_classwise(nn.Module):
     Args:
         margin (float): margin for triplet.
     """
-    def __init__(self, margin=0.3, num_classes=37):
+    def __init__(self, margin=0.3, num_classes=6):
         super(TripletLossbatch_classwise, self).__init__()
         self.margin = margin
         self.ranking_loss = nn.MarginRankingLoss(margin=margin)
