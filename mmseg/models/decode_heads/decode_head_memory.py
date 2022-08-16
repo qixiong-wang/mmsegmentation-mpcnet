@@ -107,9 +107,9 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
             self.dropout = None
         self.fp16_enabled = False
         self.large_batch_queue = Large_batch_queue_classwise(
-            num_classes=self.num_classes *4, number_of_instance= 100 , feat_len= 128)
+            num_classes=self.num_classes, number_of_instance= 100 , feat_len= 128)
         self.loss_batch_tri = TripletLossbatch_classwise(num_classes=self.num_classes)
-        self.loss_batch_comp = Compact_intra_Loss(num_classes=self.num_classes*4)
+        self.loss_batch_comp = Compact_intra_Loss(num_classes=self.num_classes)
 
     def extra_repr(self):
         """Extra repr."""
@@ -225,17 +225,18 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
         number_sub_class = int(cls_feature.shape[1]/self.num_classes)
         
         batch_size = cls_feature.shape[0]
-        cls_labels = [torch.arange(self.num_classes*number_sub_class) for _ in range(batch_size)]
+        cls_labels = [torch.arange(self.num_classes) for _ in range(batch_size)]*4
         cls_labels = torch.cat(cls_labels)
 
         cls_feature = torch.reshape(cls_feature,(-1,cls_feature.shape[-1]))
+
         large_batch_queue = self.large_batch_queue(cls_feature, cls_labels)
-        loss_batch_tri = self.loss_batch_tri(cls_feature, cls_labels, large_batch_queue)
+        # loss_batch_tri = self.loss_batch_tri(cls_feature, cls_labels, large_batch_queue)
 
-        loss_comp= self.loss_batch_comp(cls_feature, cls_labels, large_batch_queue)
+        # loss_comp= self.loss_batch_comp(cls_feature, cls_labels, large_batch_queue)
 
-        losses['loss_triplet'] = loss_batch_tri
-        losses['loss_comp'] = loss_comp
+        # losses['loss_triplet'] = loss_batch_tri
+        # losses['loss_comp'] = loss_comp
 
         return losses
 

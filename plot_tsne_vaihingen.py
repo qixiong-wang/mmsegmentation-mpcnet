@@ -52,7 +52,7 @@ def hard_example_mining(dist_mat, pid_labels, queue_labels, return_inds=False):
 
     return dist_ap, dist_an
 
-model_dict = torch.load('work_dirs/fpn_twins_cascade_dpet_multi_memory_vaihingen/iter_16000.pth')
+model_dict = torch.load('work_dirs/fpn_twins_cascade_dpet_multi_memory_vaihingen_20220808/iter_80000.pth')
 
 query_feature = model_dict['state_dict']['decode_head.large_batch_queue.large_batch_queue']
 
@@ -123,10 +123,10 @@ query_feature_tsne = torch.from_numpy(query_feature_tsne).cuda()
 dist_mat_tsne = euclidean_dist(query_feature_tsne.reshape(-1,2), query_feature_tsne.reshape(-1,2))
 dist_ap_tsne, dist_an_tsne = hard_example_mining(dist_mat_tsne,batch_queue_label,batch_queue_label)
 query_feature_tsne = query_feature_tsne.cpu().numpy()
-query_feature_tsne = np.reshape(query_feature_tsne,(24,-1,2))
+query_feature_tsne = np.reshape(query_feature_tsne,(6,-1,2))
 
 
-for i in range(24):
+for i in range(6):
     try:
         color_idx = int(i%6)
         plt.scatter(query_feature_tsne[i,:,0], query_feature_tsne[i,:,1], marker='o',color = colors[color_idx])
@@ -136,6 +136,6 @@ for i in range(24):
     #     plt.scatter(cls_tsne_feature[indices, 0],  cls_tsne_feature[indices, 1],s=20,color = colors[cls_idx], marker='o',label = CLASSES[cls_idx])
     # 
     # plt.legend(fontsize=20,bbox_to_anchor=(1.05,0),loc=3,borderaxespad=0)
-plt.savefig('query_feature_vis_vaihingen_20220802.png')
+plt.savefig('query_feature_vis_vaihingen_20220809.png')
 
 
