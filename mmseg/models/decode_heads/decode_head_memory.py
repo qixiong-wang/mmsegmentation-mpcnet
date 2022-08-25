@@ -230,7 +230,7 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
 
         cls_feature = torch.reshape(cls_feature,(-1,cls_feature.shape[-1]))
 
-        large_batch_queue = self.large_batch_queue(cls_feature, cls_labels)
+        # large_batch_queue = self.large_batch_queue(cls_feature, cls_labels)
         # loss_batch_tri = self.loss_batch_tri(cls_feature, cls_labels, large_batch_queue)
 
         # loss_comp= self.loss_batch_comp(cls_feature, cls_labels, large_batch_queue)
