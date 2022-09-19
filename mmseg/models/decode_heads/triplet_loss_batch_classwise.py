@@ -125,6 +125,7 @@ class Compact_intra_Loss(nn.Module):
         num_subcluster,num_sample, channel = large_batch_queue.shape[0],large_batch_queue.shape[1],large_batch_queue.shape[2]
          
         pid_features = pid_features.reshape(-1,self.num_classes,channel)
+
         # pid_labels = pid_labels.reshape(num_subcluster,-1)
 
         # pid_features = torch.mean(pid_features,dim=0)

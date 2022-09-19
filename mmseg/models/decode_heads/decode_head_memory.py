@@ -107,9 +107,9 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
             self.dropout = None
         self.fp16_enabled = False
         self.large_batch_queue = Large_batch_queue_classwise(
-            num_classes=self.num_classes, number_of_instance= 100 , feat_len= 128)
+            num_classes=self.num_classes*3, number_of_instance= 100 , feat_len= 128)
         self.loss_batch_tri = TripletLossbatch_classwise(num_classes=self.num_classes)
-        self.loss_batch_comp = Compact_intra_Loss(num_classes=self.num_classes)
+        self.loss_batch_comp = Compact_intra_Loss(num_classes=self.num_classes*3)
 
     def extra_repr(self):
         """Extra repr."""
@@ -205,37 +205,40 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
         Returns:
             dict[str, Tensor]: a dictionary of loss components
         """
-        seg_logits, cls_feature = self.forward(inputs)
+        seg_logits, multi_prototype = self.forward(inputs)
 
-        losses = dict({'loss_ce': 0,'acc_seg': 0})
+
         
         if len(seg_logits.shape)==4:
-            losses = self.losses(seg_logits[:,i], gt_semantic_seg)
+            losses = self.losses(seg_logits, gt_semantic_seg)
+            
         else:
+            losses = dict({'loss_ce': 0,'acc_seg': 0})
             loss_list = []
             for i in range(seg_logits.shape[1]):
                 loss_list.append(self.losses(seg_logits[:,i], gt_semantic_seg))
             for loss in loss_list:
-
                 losses['loss_ce'] += loss['loss_ce']
                 losses['acc_seg'] += loss['acc_seg']
-        losses['acc_seg'] = losses['acc_seg']/len(loss_list)
+            losses['acc_seg'] = losses['acc_seg']/len(loss_list)
         # losses = self.losses(seg_logits, gt_semantic_seg)
 
-        number_sub_class = int(cls_feature.shape[1]/self.num_classes)
         
-        batch_size = cls_feature.shape[0]
-        cls_labels = [torch.arange(self.num_classes) for _ in range(batch_size)]*4
+        num_stage = len(multi_prototype)
+        batch_size = multi_prototype[0].shape[0]
+
+        multi_prototype = torch.cat(multi_prototype[1:],dim=1)
+        cls_labels = [torch.arange(self.num_classes*3)]*batch_size
         cls_labels = torch.cat(cls_labels)
 
-        cls_feature = torch.reshape(cls_feature,(-1,cls_feature.shape[-1]))
+        multi_prototype = torch.reshape(multi_prototype,(-1,multi_prototype.shape[-1]))
 
-        # large_batch_queue = self.large_batch_queue(cls_feature, cls_labels)
-        # loss_batch_tri = self.loss_batch_tri(cls_feature, cls_labels, large_batch_queue)
+        large_batch_queue = self.large_batch_queue(multi_prototype, cls_labels)
+        loss_batch_tri = self.loss_batch_tri(multi_prototype, cls_labels, large_batch_queue)
 
-        # loss_comp= self.loss_batch_comp(cls_feature, cls_labels, large_batch_queue)
+        # loss_comp= self.loss_batch_comp(multi_prototype, cls_labels, large_batch_queue)
 
-        # losses['loss_triplet'] = loss_batch_tri
+        losses['loss_triplet'] = loss_batch_tri
         # losses['loss_comp'] = loss_comp
 
         return losses
@@ -255,8 +258,8 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
         Returns:
             Tensor: Output segmentation map.
         """
-        return torch.max(self.forward(inputs)[0],dim=1)[0]
-        # return self.forward(inputs)
+        # return torch.max(self.forward(inputs)[0],dim=1)[0]
+        return self.forward(inputs)[0]
     def cls_seg(self, feat):
         """Classify each pixel."""
         if self.dropout is not None:
