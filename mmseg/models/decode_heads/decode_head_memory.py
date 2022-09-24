@@ -12,6 +12,7 @@ from ..losses import accuracy
 from .large_batch_queue_classwise import Large_batch_queue_classwise
 from .triplet_loss_batch_classwise import TripletLossbatch_classwise
 from .triplet_loss_batch_classwise import Compact_intra_Loss
+from .nce_loss import Nce_contrast_loss
 class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
     """Base class for BaseDecodeHead.
 
@@ -106,10 +107,10 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
         else:
             self.dropout = None
         self.fp16_enabled = False
-        self.large_batch_queue = Large_batch_queue_classwise(
-            num_classes=self.num_classes*3, number_of_instance= 100 , feat_len= 128)
-        self.loss_batch_tri = TripletLossbatch_classwise(num_classes=self.num_classes)
-        self.loss_batch_comp = Compact_intra_Loss(num_classes=self.num_classes*3)
+        self.large_queue = Large_batch_queue_classwise(
+            num_classes=self.num_classes, number_of_instance= 100 , feat_len= 128)
+        self.loss_batch_nce = Nce_contrast_loss(num_classes=self.num_classes)
+        # self.loss_batch_comp = Compact_intra_Loss(num_classes=self.num_classes*3)
 
     def extra_repr(self):
         """Extra repr."""
@@ -232,13 +233,12 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
         cls_labels = torch.cat(cls_labels)
 
         multi_prototype = torch.reshape(multi_prototype,(-1,multi_prototype.shape[-1]))
-
-        large_batch_queue = self.large_batch_queue(multi_prototype, cls_labels)
-        loss_batch_tri = self.loss_batch_tri(multi_prototype, cls_labels, large_batch_queue)
+        large_batch_queue = self.large_queue(multi_prototype, cls_labels)
+        loss_batch_nce = self.loss_batch_nce(multi_prototype, cls_labels,large_batch_queue)
 
         # loss_comp= self.loss_batch_comp(multi_prototype, cls_labels, large_batch_queue)
 
-        losses['loss_triplet'] = loss_batch_tri
+        losses['loss_nce'] = loss_batch_nce
         # losses['loss_comp'] = loss_comp
 
         return losses
