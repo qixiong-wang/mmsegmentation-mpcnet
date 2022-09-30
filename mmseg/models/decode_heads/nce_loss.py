@@ -43,19 +43,18 @@ class Nce_contrast_loss(nn.Module):
 
         avai_labels=torch.stack(avai_labels).cuda()
         avai_labels_onehot = F.one_hot(avai_labels,self.num_classes).float()
-        queue_labels_onehot =  F.one_hot(torch.arange(self.num_classes).unsqueeze(1).expand(self.num_classes,100*3).reshape(-1)).float().cuda()
+        queue_labels_onehot =  F.one_hot(torch.arange(self.num_classes).unsqueeze(1).expand(self.num_classes,100).repeat(3,1).reshape(-1)).float().cuda()
 
         same_label_matrix = torch.matmul(avai_labels_onehot,queue_labels_onehot.permute(1,0))
 
         resized_queue = torch.permute(large_batch_queue.reshape(-1,large_batch_queue.shape[-1]),(1,0))
-        # resized_queue = F.normalize(resized_queue,dim=0)
+        resized_queue = F.normalize(resized_queue,dim=0)
         avai_features=torch.stack(avai_features).cuda()
-        # avai_features = F.normalize(avai_features,dim=1)
+        avai_features = F.normalize(avai_features,dim=1)
 
         logits=torch.matmul(avai_features,resized_queue) 
         # dist_label = same_label_matrix*2-1
         # logits_ranking = torch.multiply(logits,dist_label)
-
         prob =torch.sum(torch.multiply(same_label_matrix,F.softmax(logits,dim=1)),dim=1)
 
         loss = torch.sum(-torch.log(prob))/prob.shape[0]

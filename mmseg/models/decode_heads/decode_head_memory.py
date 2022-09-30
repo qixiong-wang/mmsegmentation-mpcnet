@@ -230,6 +230,7 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
 
         multi_prototype = torch.cat(multi_prototype[1:],dim=1)
         cls_labels = [torch.arange(self.num_classes*3)]*batch_size
+
         cls_labels = torch.cat(cls_labels)
 
         multi_prototype = torch.reshape(multi_prototype,(-1,multi_prototype.shape[-1]))
