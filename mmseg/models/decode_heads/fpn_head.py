@@ -59,6 +59,7 @@ class FPNHead(BaseDecodeHead):
         output = self.scale_heads[0](x[0])
         for i in range(1, len(self.feature_strides)):
             # non inplace
+
             output = output + resize(
                 self.scale_heads[i](x[i]),
                 size=output.shape[2:],

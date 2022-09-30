@@ -52,10 +52,11 @@ def hard_example_mining(dist_mat, pid_labels, queue_labels, return_inds=False):
 
     return dist_ap, dist_an
 
-model_dict = torch.load('work_dirs/fpn_twins_cascade_dpet_multi_memory_isaid/iter_160000.pth')
+model_dict = torch.load('work_dirs/fpn_twins_isaid_nceloss_bs2/iter_160000.pth')
 
-query_feature = model_dict['state_dict']['decode_head.large_batch_queue.large_batch_queue']
-
+query_feature = model_dict['state_dict']['decode_head.large_queue.large_batch_queue']
+import pdb
+pdb.set_trace()
 # tsne = manifold.TSNE(n_components=2,init='pca',random_state=1)
 # query_feature_tsne = tsne.fit_transform(query_feature)
 
@@ -108,13 +109,13 @@ dist_ap, dist_an = hard_example_mining(dist_mat,batch_queue_label,batch_queue_la
 
 
 query_feature = torch.reshape(query_feature,(-1,128)).cpu().numpy()
-# tsne = manifold.TSNE(n_components=2,init='pca',random_state=1)
-# query_feature_tsne = tsne.fit_transform(query_feature)
+tsne = manifold.TSNE(n_components=2,init='pca',random_state=1)
+query_feature_tsne = tsne.fit_transform(query_feature)
 
 
 # query_feature_tsne = manifold.Isomap(n_neighbors=5, n_components=2, n_jobs=-1).fit_transform(query_feature)
 # query_feature_tsne = manifold.SpectralEmbedding(n_components=2, n_jobs=-1).fit_transform(query_feature)
-query_feature_tsne = manifold.MDS(n_components=2, n_jobs=-1).fit_transform(query_feature)
+# query_feature_tsne = manifold.MDS(n_components=2, n_jobs=-1).fit_transform(query_feature)
 # query_feature_tsne = manifold.LocallyLinearEmbedding(n_components=2, n_jobs=-1).fit_transform(query_feature)
 
 
@@ -136,6 +137,6 @@ for i in range(64):
     #     plt.scatter(cls_tsne_feature[indices, 0],  cls_tsne_feature[indices, 1],s=20,color = colors[cls_idx], marker='o',label = CLASSES[cls_idx])
     # 
     # plt.legend(fontsize=20,bbox_to_anchor=(1.05,0),loc=3,borderaxespad=0)
-plt.savefig('query_feature_vis_20220722.png')
+plt.savefig('query_feature_vis_20220930.png')
 
 

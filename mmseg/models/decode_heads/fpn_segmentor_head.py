@@ -303,7 +303,7 @@ class FPN_segmentor_Head(BaseDecodeHead_momory):
         # cls_seg_feat = self.cls_emb.expand(output.size(0), -1, -1)
         for i in range(1, len(self.feature_strides)):
             # non inplace
-            
+
             resized_patches = output
             b, c, h, w = resized_patches.shape
             resized_patches = resized_patches.permute(0, 2, 3, 1).contiguous().view(b, -1, c)
@@ -333,5 +333,5 @@ class FPN_segmentor_Head(BaseDecodeHead_momory):
         output = output.permute(0, 2, 1).contiguous().view(b,-1, h, w)
 
         # output = torch.max(output,dim=1)[0]
-        
+
         return output, multi_prototype

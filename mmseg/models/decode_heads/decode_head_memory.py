@@ -108,7 +108,7 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
             self.dropout = None
         self.fp16_enabled = False
         self.large_queue = Large_batch_queue_classwise(
-            num_classes=self.num_classes, number_of_instance= 100 , feat_len= 128)
+            num_classes=self.num_classes*3, number_of_instance= 100 , feat_len= 128)
         self.loss_batch_nce = Nce_contrast_loss(num_classes=self.num_classes)
         # self.loss_batch_comp = Compact_intra_Loss(num_classes=self.num_classes*3)
 
@@ -234,6 +234,7 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
 
         multi_prototype = torch.reshape(multi_prototype,(-1,multi_prototype.shape[-1]))
         large_batch_queue = self.large_queue(multi_prototype, cls_labels)
+
         loss_batch_nce = self.loss_batch_nce(multi_prototype, cls_labels,large_batch_queue)
 
         # loss_comp= self.loss_batch_comp(multi_prototype, cls_labels, large_batch_queue)
