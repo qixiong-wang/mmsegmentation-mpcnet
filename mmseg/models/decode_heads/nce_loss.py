@@ -56,6 +56,7 @@ class Nce_contrast_loss(nn.Module):
         # dist_label = same_label_matrix*2-1
         # logits_ranking = torch.multiply(logits,dist_label)
         prob =torch.sum(torch.multiply(same_label_matrix,F.softmax(logits,dim=1)),dim=1)
+        # prob =torch.sum(torch.multiply(same_label_matrix,F.softmax(logits/128,dim=1)),dim=1)
 
         loss = torch.sum(-torch.log(prob))/prob.shape[0]
         # torch.cuda.empty_cache()

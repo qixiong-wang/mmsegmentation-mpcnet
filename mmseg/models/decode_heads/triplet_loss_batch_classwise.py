@@ -128,10 +128,15 @@ class Compact_intra_Loss(nn.Module):
 
         # pid_labels = pid_labels.reshape(num_subcluster,-1)
 
-        mean_features = torch.mean(pid_features,dim=0)
 
+        mean_features = F.normalize(large_batch_queue,dim=2)
+        mean_features = torch.mean(mean_features,dim=1)
+
+        pid_features = F.normalize(pid_features,dim=2)
         # diff = large_batch_queue.permute(1,0,2) - pid_features[0]
-        diff = large_batch_queue.permute(1,0,2) - mean_features
+
+        diff = pid_features - mean_features
+
         loss = torch.norm(diff)/num_sample
 
         # torch.cuda.empty_cache()

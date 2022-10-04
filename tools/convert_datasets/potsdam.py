@@ -54,8 +54,8 @@ def clip_big_image(image_path, clip_save_dir, args, to_label=False):
             (w - clip_size) / stride_size) + 1
 
     x, y = np.meshgrid(np.arange(num_cols + 1), np.arange(num_rows + 1))
-    xmin = x * clip_size
-    ymin = y * clip_size
+    xmin = x * stride_size
+    ymin = y * stride_size
 
     xmin = xmin.ravel()
     ymin = ymin.ravel()

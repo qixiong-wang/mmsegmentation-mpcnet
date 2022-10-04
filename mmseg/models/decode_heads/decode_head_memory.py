@@ -110,7 +110,7 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
         self.large_queue = Large_batch_queue_classwise(
             num_classes=self.num_classes*3, number_of_instance= 100 , feat_len= 128)
         self.loss_batch_nce = Nce_contrast_loss(num_classes=self.num_classes)
-        # self.loss_batch_comp = Compact_intra_Loss(num_classes=self.num_classes*3)
+        self.loss_batch_comp = Compact_intra_Loss(num_classes=self.num_classes*3)
 
     def extra_repr(self):
         """Extra repr."""
@@ -238,10 +238,10 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
 
         loss_batch_nce = self.loss_batch_nce(multi_prototype, cls_labels,large_batch_queue)
 
-        # loss_comp= self.loss_batch_comp(multi_prototype, cls_labels, large_batch_queue)
+        loss_comp= self.loss_batch_comp(multi_prototype, cls_labels, large_batch_queue)
 
         losses['loss_nce'] = loss_batch_nce
-        # losses['loss_comp'] = loss_comp
+        losses['loss_comp'] = loss_comp
 
         return losses
 

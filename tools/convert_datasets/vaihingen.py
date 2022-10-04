@@ -9,6 +9,7 @@ import zipfile
 
 import mmcv
 import numpy as np
+from scipy.fftpack import ss_diff
 
 
 def parse_args():
@@ -26,7 +27,7 @@ def parse_args():
         '--stride_size',
         type=int,
         help='stride of clipping original images',
-        default=256)
+        default=128)
     args = parser.parse_args()
     return args
 
@@ -50,8 +51,8 @@ def clip_big_image(image_path, clip_save_dir, to_label=False):
         (w - cs) / ss) * ss + cs >= w else math.ceil((w - cs) / ss) + 1
 
     x, y = np.meshgrid(np.arange(num_cols + 1), np.arange(num_rows + 1))
-    xmin = x * cs
-    ymin = y * cs
+    xmin = x * ss
+    ymin = y * ss
 
     xmin = xmin.ravel()
     ymin = ymin.ravel()
@@ -137,6 +138,7 @@ def main():
             for i, src_path in enumerate(src_path_list):
                 area_idx = osp.basename(src_path).split('_')[3].strip('.tif')
                 data_type = 'train' if area_idx in splits['train'] else 'val'
+
                 if 'noBoundary' in src_path:
                     dst_dir = osp.join(out_dir, 'ann_dir', data_type)
                     clip_big_image(src_path, dst_dir, to_label=True)
