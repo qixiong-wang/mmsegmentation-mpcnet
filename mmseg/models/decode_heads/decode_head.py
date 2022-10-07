@@ -233,8 +233,8 @@ class BaseDecodeHead(BaseModule, metaclass=ABCMeta):
         Returns:
             Tensor: Output segmentation map.
         """
-        return torch.max(self.forward(inputs),dim=1)[0]
-        # return self.forward(inputs)
+        # return torch.max(self.forward(inputs),dim=1)[0]
+        return self.forward(inputs)
 
     def cls_seg(self, feat):
         """Classify each pixel."""
