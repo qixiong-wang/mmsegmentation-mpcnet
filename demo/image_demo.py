@@ -14,12 +14,12 @@ def main():
         '--device', default='cuda:0', help='Device used for inference')
     parser.add_argument(
         '--palette',
-        default='cityscapes',
+        default='isaid',
         help='Color palette used for segmentation map')
     parser.add_argument(
         '--opacity',
         type=float,
-        default=0.5,
+        default=1,
         help='Opacity of painted segmentation map. In (0, 1] range.')
     args = parser.parse_args()
 

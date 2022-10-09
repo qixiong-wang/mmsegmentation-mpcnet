@@ -15,7 +15,7 @@ from mmseg.models.decode_heads.decode_head_memory import BaseDecodeHead_momory
 from mmseg.ops import Upsample, resize
 from ..builder import HEADS
 from .decode_head import BaseDecodeHead
-
+import matplotlib.pyplot as plt
 
 class SelfAttentionLayer(nn.Module):
 
@@ -325,6 +325,16 @@ class FPN_segmentor_Head(BaseDecodeHead_momory):
         output = self.patch_proj(output)
         cls_seg_feat = self.classes_proj(multi_prototype[-1])
 
+        # heatmap=torch.mm(output[0],output.view(1,h,w,-1)[:,175,145,:].permute(1,0))
+        
+        # heatmap=torch.sum(output[0],dim=1)
+        # heatmap=torch.max(output[0],dim=1)[0]
+        # heatmap = torch.reshape(heatmap,(h,w))
+
+        # plt.imshow(heatmap.cpu().numpy(),cmap='jet')
+        # plt.savefig('vis_images/P1149_heatmap_1')
+        # import pdb
+        # pdb.set_trace()
         output = F.normalize(output, dim=2, p=2)
         cls_seg_feat = F.normalize(cls_seg_feat, dim=2, p=2)
 

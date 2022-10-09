@@ -262,6 +262,7 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
         """
         # return torch.max(self.forward(inputs)[0],dim=1)[0]
         return self.forward(inputs)[0]
+        
     def cls_seg(self, feat):
         """Classify each pixel."""
         if self.dropout is not None:
