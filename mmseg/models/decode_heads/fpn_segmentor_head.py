@@ -227,9 +227,9 @@ class FPN_segmentor_Head(BaseDecodeHead_momory):
         embed_dims = 128
         # self.dec_proj = nn.Linear(in_channels, embed_dims)\
 
-        # self.num_subclasses = 4
+        self.num_subclasses = 4
         self.cls_emb = nn.Parameter(
-            torch.randn(1, self.num_classes, embed_dims))
+            torch.randn(1, self.num_classes*self.num_classes, embed_dims))
         for i in range(len(feature_strides)-1):
             self.transformer_cross_attention_layers.append(
                 CrossAttentionLayer(
@@ -278,7 +278,7 @@ class FPN_segmentor_Head(BaseDecodeHead_momory):
         # self.decoder_norm = build_norm_layer(
         #     norm_cfg, embed_dims, postfix=1)[1]
         self.mask_norm = build_norm_layer(
-            norm_cfg, self.num_classes, postfix=2)[1]
+            norm_cfg, self.num_classes*self.num_subclasses, postfix=2)[1]
 
         delattr(self, 'conv_seg')
         init_std = 0.02
@@ -340,8 +340,8 @@ class FPN_segmentor_Head(BaseDecodeHead_momory):
 
         output = output @ cls_seg_feat.transpose(1, 2)
         output = self.mask_norm(output)
-        output = output.permute(0, 2, 1).contiguous().view(b,-1, h, w)
-
-        # output = torch.max(output,dim=1)[0]
+        output = output.permute(0, 2, 1).contiguous().view(b,self.num_classes,-1, h, w)
+        # output = output.permute(0, 2, 1).contiguous().view(b,-1, h, w)
+        output = torch.max(output,dim=1)[0]
 
         return output, multi_prototype
