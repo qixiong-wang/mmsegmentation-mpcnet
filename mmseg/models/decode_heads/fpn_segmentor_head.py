@@ -229,7 +229,7 @@ class FPN_segmentor_Head(BaseDecodeHead_momory):
 
         self.num_subclasses = 4
         self.cls_emb = nn.Parameter(
-            torch.randn(1, self.num_classes*self.num_classes, embed_dims))
+            torch.randn(1, self.num_classes*self.num_subclasses, embed_dims))
         for i in range(len(feature_strides)-1):
             self.transformer_cross_attention_layers.append(
                 CrossAttentionLayer(
@@ -326,7 +326,6 @@ class FPN_segmentor_Head(BaseDecodeHead_momory):
         cls_seg_feat = self.classes_proj(multi_prototype[-1])
 
         # heatmap=torch.mm(output[0],output.view(1,h,w,-1)[:,175,145,:].permute(1,0))
-        
         # heatmap=torch.sum(output[0],dim=1)
         # heatmap=torch.max(output[0],dim=1)[0]
         # heatmap = torch.reshape(heatmap,(h,w))
@@ -339,8 +338,9 @@ class FPN_segmentor_Head(BaseDecodeHead_momory):
         cls_seg_feat = F.normalize(cls_seg_feat, dim=2, p=2)
 
         output = output @ cls_seg_feat.transpose(1, 2)
+
         output = self.mask_norm(output)
-        output = output.permute(0, 2, 1).contiguous().view(b,self.num_classes,-1, h, w)
+        output = output.permute(0, 2, 1).contiguous().view(b,self.num_subclasses,-1, h, w)
         # output = output.permute(0, 2, 1).contiguous().view(b,-1, h, w)
         # output = torch.max(output,dim=1)[0]
 
