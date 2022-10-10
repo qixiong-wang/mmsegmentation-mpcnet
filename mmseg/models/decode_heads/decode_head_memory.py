@@ -238,10 +238,10 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
 
         loss_batch_nce = self.loss_batch_nce(multi_prototype, cls_labels,large_batch_queue)
 
-        loss_comp= self.loss_batch_comp(multi_prototype, cls_labels, large_batch_queue)
+        # loss_comp= self.loss_batch_comp(multi_prototype, cls_labels, large_batch_queue)
 
         losses['loss_nce'] = loss_batch_nce
-        losses['loss_comp'] = loss_comp
+        # losses['loss_comp'] = loss_comp
 
         return losses
 
