@@ -342,6 +342,6 @@ class FPN_segmentor_Head(BaseDecodeHead_momory):
         output = self.mask_norm(output)
         output = output.permute(0, 2, 1).contiguous().view(b,self.num_classes,-1, h, w)
         # output = output.permute(0, 2, 1).contiguous().view(b,-1, h, w)
-        output = torch.max(output,dim=1)[0]
+        # output = torch.max(output,dim=1)[0]
 
         return output, multi_prototype

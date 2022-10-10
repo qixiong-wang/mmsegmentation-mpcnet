@@ -227,7 +227,7 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
         
         num_stage = len(multi_prototype)
         batch_size = multi_prototype[0].shape[0]
-
+        
         multi_prototype = torch.cat(multi_prototype[1:],dim=1)
         cls_labels = [torch.arange(self.num_classes*3)]*batch_size
 
@@ -260,8 +260,8 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
         Returns:
             Tensor: Output segmentation map.
         """
-        # return torch.max(self.forward(inputs)[0],dim=1)[0]
-        return self.forward(inputs)[0]
+        return torch.max(self.forward(inputs)[0],dim=1)[0]
+        # return self.forward(inputs)[0]
         
     def cls_seg(self, feat):
         """Classify each pixel."""
