@@ -229,18 +229,20 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
         batch_size = multi_prototype[0].shape[0]
         
         multi_prototype = torch.cat(multi_prototype[1:],dim=1)
-        cls_labels = [torch.arange(self.num_classes*3)]*batch_size
+        # cls_labels = [torch.arange(self.num_classes*3)]*batch_size
 
+        cls_labels = [torch.arange(self.num_classes).repeat(12)]*batch_size
         cls_labels = torch.cat(cls_labels)
 
         multi_prototype = torch.reshape(multi_prototype,(-1,multi_prototype.shape[-1]))
+
         large_batch_queue = self.large_queue(multi_prototype, cls_labels)
 
-        # loss_batch_nce = self.loss_batch_nce(multi_prototype, cls_labels,large_batch_queue)
+        loss_batch_nce = self.loss_batch_nce(multi_prototype, cls_labels,large_batch_queue)
 
         # loss_comp= self.loss_batch_comp(multi_prototype, cls_labels, large_batch_queue)
 
-        # losses['loss_nce'] = loss_batch_nce
+        losses['loss_nce'] = loss_batch_nce
         # losses['loss_comp'] = loss_comp
 
         return losses
