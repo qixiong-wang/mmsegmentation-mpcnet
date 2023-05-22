@@ -297,7 +297,7 @@ class CustomDataset(Dataset):
 
         for pred, index in zip(preds, indices):
             seg_map = self.get_gt_seg_map_by_idx(index)
-
+            
             pre_eval_results.append(
                 intersect_and_union(
                     pred,

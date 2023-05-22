@@ -95,7 +95,6 @@ def single_gpu_test(model,
             img_metas = data['img_metas'][0].data[0]
             imgs = tensor2imgs(img_tensor, **img_metas[0]['img_norm_cfg'])
             assert len(imgs) == len(img_metas)
-
             for img, img_meta in zip(imgs, img_metas):
                 h, w, _ = img_meta['img_shape']
                 img_show = img[:h, :w, :]
@@ -125,8 +124,6 @@ def single_gpu_test(model,
         if pre_eval:
             # TODO: adapt samples_per_gpu > 1.
             # only samples_per_gpu=1 valid now
-            import pdb
-            pdb.set_trace()
             result = dataset.pre_eval(result, indices=batch_indices)
             results.extend(result)
         else:
