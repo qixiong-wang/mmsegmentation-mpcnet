@@ -35,12 +35,9 @@ English | [简体中文](README_zh-CN.md)
 
 ## Introduction
 
-MMSegmentation is an open source semantic segmentation toolbox based on PyTorch.
-It is a part of the OpenMMLab project.
+This is the implementation for Multi-scale Prototype Contrast Network. 
 
-The master branch works with **PyTorch 1.5+**.
-
-![demo image](resources/seg_demo.gif)
+![demo image](resources/fig_3.png)
 
 ### Major features
 

@@ -10,8 +10,8 @@ from mmseg.ops import resize
 from ..builder import build_loss
 from ..losses import accuracy
 from .large_batch_queue_classwise import Large_batch_queue_classwise
-from .triplet_loss_batch_classwise import TripletLossbatch_classwise
-from .triplet_loss_batch_classwise import Compact_intra_Loss
+from .mpc_loss import TripletLossbatch_classwise
+from .mpc_loss import Compact_intra_Loss
 from .nce_loss import Nce_contrast_loss
 class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
     """Base class for BaseDecodeHead.
