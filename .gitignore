@@ -119,3 +119,5 @@ mmseg/.mim
 # Pytorch
 *.pth
 *.png
+
+!resources/framework.png
