@@ -10,9 +10,9 @@ from mmseg.ops import resize
 from ..builder import build_loss
 from ..losses import accuracy
 from .large_batch_queue_classwise import Large_batch_queue_classwise
-from .mpc_loss import TripletLossbatch_classwise
-from .mpc_loss import Compact_intra_Loss
-from .nce_loss import Nce_contrast_loss
+
+from .mpc_loss import Nce_contrast_loss,Compact_intra_Loss
+
 class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
     """Base class for BaseDecodeHead.
 
@@ -109,8 +109,8 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
         self.fp16_enabled = False
         self.large_queue = Large_batch_queue_classwise(
             num_classes=self.num_classes*3, number_of_instance= 100 , feat_len= 128)
-        self.loss_batch_nce = Nce_contrast_loss(num_classes=self.num_classes)
-        self.loss_batch_comp = Compact_intra_Loss(num_classes=self.num_classes*3)
+        self.loss_batch_nce = Nce_contrast_loss(num_classes=self.num_classes)  ### CPC loss in paper
+        self.loss_batch_comp = Compact_intra_Loss(num_classes=self.num_classes*3)  #### SPC loss in paper
 
     def extra_repr(self):
         """Extra repr."""
@@ -240,10 +240,10 @@ class BaseDecodeHead_momory(BaseModule, metaclass=ABCMeta):
 
         loss_batch_nce = self.loss_batch_nce(multi_prototype, cls_labels,large_batch_queue)
 
-        # loss_comp= self.loss_batch_comp(multi_prototype, cls_labels, large_batch_queue)
+        loss_comp= self.loss_batch_comp(multi_prototype, cls_labels, large_batch_queue)
 
         losses['loss_nce'] = loss_batch_nce
-        # losses['loss_comp'] = loss_comp
+        losses['loss_comp'] = loss_comp
 
         return losses
 
